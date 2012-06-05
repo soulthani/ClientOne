@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="jardeploy">
+	<property name="jar.name" value="Client.jar" />
+	<property name="jardeploy.home" value="jardeploy"/>
+	<property name="build.home" value="build" />
+	<property name="lib.home" value="lib" />
+	<property name="source.home" value="src" />
+	<property name="class.home" value="build" />
+
+	<path id="compile.classpath">
+
+		<fileset dir="${lib.home}" includes="**/*.jar"/>
+	</path>
+
+	<target name="compile" description="Compile core sources">
+		<delete dir="${build.home}" />
+		<mkdir dir="${build.home}" />
+
+		<javac srcdir="."
+	                   includes="**"
+	                   destdir="${build.home}"
+	                   debug="true"
+        				source="1.5">
+			<classpath refid="compile.classpath"/>
+		</javac>
+	</target>
+
+
+
+	<target name="jar" depends="compile" description="Create jar and MANIFEST.MF">
+
+		<!-- create a property containing all .jar files, prefix lib/, and seperated with a space -->
+		<pathconvert property="libs.project" pathsep=" ">
+			<mapper>
+				<chainedmapper>
+
+					<!-- remove absolute path -->
+					<flattenmapper />
+
+					<!-- add lib/ prefix -->
+					<globmapper from="*" to="${lib.home}/*" />
+				</chainedmapper>
+			</mapper>
+
+			<path>
+				<!-- lib.home contains all jar files, in several subdirectories -->
+				<fileset dir="${lib.home}">
+					<include name="**/*.jar" />
+				</fileset>
+			</path>
+		</pathconvert>
+
+
+		<!-- create the jar -->
+		<jar jarfile="${build.home}/${jar.name}" basedir="${build.home}" >
+
+			<!-- define MANIFEST.MF -->
+			<manifest>
+				<attribute name="Class-Path" value="./ ${libs.project}" />
+				<attribute name="Main-Class" value="com.client.exercise.Main" />
+			</manifest>
+		</jar>
+	</target>
+
+
+
+	<target name="jardeploy" depends="jar" description="Create binary distribution">
+		<delete dir="${jardeploy.home}" />
+
+		<!-- contains all library dependencies -->
+		<mkdir dir="${jardeploy.home}/lib" />
+		<copy todir="${jardeploy.home}" file="${build.home}/${jar.name}" />
+		<copy todir="${jardeploy.home}/lib" filtering="off">
+			<!-- remove the directory hierarchy: lib contains no subdirectories -->
+			<flattenmapper />
+			<fileset dir="${lib.home}" includes="**/*.jar" />
+		</copy>
+	</target>
+
+
+
+</project>
